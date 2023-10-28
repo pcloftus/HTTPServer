@@ -190,16 +190,8 @@ class HTTPServer(ServerBase):
             if len(split_part) < 1:
                 raise RuntimeError("Error parsing multipart (split_part1)")
 
-            #split_part = split_part[1:]
-
-
             result_dict[b"Multipart " + bytes(i)] = {}
             result_dict[b"Multipart " + bytes(i)][b"Headers"] = {}
-
-            #head_content_delimit = split_part.index(b'')
-
-            #if len(split_part) < head_content_delimit + 2:
-                #raise RuntimeError("Error parsing multipart body (split_part2)")
 
             print("\nSPLIT PART 0\n", split_part[0])
             part_headers = split_part[0].split(b"\r\n")[1:]
@@ -286,19 +278,11 @@ class HTTPRequest:
         if len(words) > 2:
             self.http_version = words[2]
 
-        #break_index = lines.index(b'')
-
         if len(lines) < 1:
             raise RuntimeError("Invalid request received (lines1)")
 
         headers_list = lines[1:]
         self.headers = self.parse_headers(headers_list)
-
-        #if len(lines) < break_index + 2:
-            #raise RuntimeError("Invalid request received (lines2)")
-
-        #self.body = b"\r\n".join(lines[break_index + 1:])
-
 
     def parse_headers(self, headers_list):
         headers_dict = {}
