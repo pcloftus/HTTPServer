@@ -101,7 +101,7 @@ class HTTPServer(ServerBase):
         Contains the basic HTTP headers sent with all responses unless 
         overwritten
     status_codes : dict (int : str)
-        Contains mappings of currently support status codes and the 
+        Contains mappings of currently supported status codes and the 
         messages that accompany them
 
     Methods 
