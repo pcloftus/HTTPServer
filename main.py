@@ -1,3 +1,5 @@
+import socket
+
 from server_socket import ServerSocket
 from handlers import Handlers
 
@@ -52,37 +54,40 @@ class ServerBase:
         serv.start()
 
         while True:
-            (conn, addr) = serv.sock.accept()
-            print("Connected by ", addr)
+            try:
+                (conn, addr) = serv.sock.accept()
+                print("Connected by ", addr)
 
-            serv_client = ServerSocket(conn)
+                serv_client = ServerSocket(conn)
 
-            data = serv_client.initial_recv()
+                data = serv_client.initial_recv()
 
-            if not serv_client.split_list:
-                self.size_error = True
-            else:
-                if len(serv_client.split_list) < 2:
-                    raise RuntimeError("Error parsing headers from bodies received from Socket")
+                if not serv_client.split_list:
+                    self.size_error = True
+                else:
+                    if len(serv_client.split_list) < 2:
+                        raise RuntimeError("Error parsing headers from bodies received from Socket")
 
-                HTTP_data = HTTPRequest(data)
+                    HTTP_data = HTTPRequest(data)
+                    print(HTTP_data.headers, HTTP_data.headers)
 
-                if b'content-length' in HTTP_data.headers:
-                    if int(HTTP_data.headers[b'content-length']) >= len(serv_client.split_list[1]):
-                        MSGLEN = int(HTTP_data.headers[b'content-length']) - len(serv_client.split_list[1])
+                    if b'content-length' in HTTP_data.headers:
+                        if int(HTTP_data.headers[b'content-length']) >= len(serv_client.split_list[1]):
+                            MSGLEN = int(HTTP_data.headers[b'content-length']) - len(serv_client.split_list[1])
+                        else:
+                            MSGLEN = serv_client.chunk_size
                     else:
                         MSGLEN = serv_client.chunk_size
-                else:
-                    MSGLEN = serv_client.chunk_size
 
-                if MSGLEN > serv_client.chunk_size:
-                    data = data + serv_client.chunked_recv(MSGLEN)
-                    
-            response = self.handle_request(data)
+                    if MSGLEN > serv_client.chunk_size:
+                        data = data + serv_client.chunked_recv(MSGLEN)
+                        
+                response = self.handle_request(data)
 
-            serv_client.chunked_send(response, len(response))
-
-            serv_client.sock.close()
+                serv_client.chunked_send(response, len(response))
+            finally:
+                serv_client.sock.shutdown(socket.SHUT_RDWR)
+                serv_client.sock.close()
 
         def handle_request(self, data):
             print("Default handle_request method called")

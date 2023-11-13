@@ -1,18 +1,27 @@
 import socket
+import ssl
 
 class ServerSocket:
     def __init__(self, sock=None):
         self.chunk_size = 4096 
         self.split_list = None
-        if sock is None:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        else:
-            self.sock = sock
 
-    def start(self, host='127.0.0.1', port=8888):
+        self.context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        self.context.load_cert_chain(certfile='example-com.cert.pem', keyfile='key.pem')
+
+        if sock is None:
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            # self.sock = self.context.wrap_socket(self.sock, server_side=True)
+        else:
+            self.sock = self.context.wrap_socket(sock, server_side=True)
+            # self.sock = sock
+
+    def start(self, host='127.0.0.1', port=8443):
         self.sock.bind((host, port))
         self.sock.listen(5)
+
+        # self.sock = self.context.wrap_socket(self.sock, server_side=True)
 
         print("Listening at: ", self.sock.getsockname())
 
