@@ -32,7 +32,7 @@ class ServerBase:
         Backup method for handling data that simply echos - intended to be 
         overridden by a more specific Server class (HTTPServer)
     """
-    def __init__(self, host='127.0.0.1', port=8888):
+    def __init__(self, host='127.0.0.1', port=8443):
         self.host = host
         self.port = port
         self.size_error = False
@@ -69,7 +69,7 @@ class ServerBase:
                         raise RuntimeError("Error parsing headers from bodies received from Socket")
 
                     HTTP_data = HTTPRequest(data)
-                    print(HTTP_data.headers, HTTP_data.headers)
+                    print(HTTP_data.method, HTTP_data.uri, HTTP_data.headers, HTTP_data.body)
 
                     if b'content-length' in HTTP_data.headers:
                         if int(HTTP_data.headers[b'content-length']) >= len(serv_client.split_list[1]):
@@ -83,11 +83,16 @@ class ServerBase:
                         data = data + serv_client.chunked_recv(MSGLEN)
                         
                 response = self.handle_request(data)
-
                 serv_client.chunked_send(response, len(response))
-            finally:
-                serv_client.sock.shutdown(socket.SHUT_RDWR)
+
                 serv_client.sock.close()
+            except Exception as e:
+                print('Shutting down: ', e)
+                break
+
+        serv_client.sock.close()
+
+        serv.sock.close()
 
         def handle_request(self, data):
             print("Default handle_request method called")
@@ -119,6 +124,8 @@ class HTTPServer(ServerBase):
     headers = {
         'Server': 'BasicServer' ,
         'Content-Type': 'text/html',
+        #'Content-Security-Policy': 'default-src \'self\'',
+        #'Strict-Transport-Security': 'max-age=63072000',
     }
 
     status_codes = {
